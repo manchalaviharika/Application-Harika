@@ -1,0 +1,71 @@
+import pygame
+import sys
+
+pygame.init()
+
+# Screen setup
+WIDTH, HEIGHT = 600, 400
+win = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Color Shift Runner")
+clock = pygame.time.Clock()
+
+# Colors: Red, Green, Blue
+colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+player_color_idx = 0
+
+# Player setup
+player_rect = pygame.Rect(50, HEIGHT // 2 - 25, 50, 50)
+
+# Obstacle setup
+obstacle_rect = pygame.Rect(WIDTH, HEIGHT // 2 - 25, 50, 50)
+obstacle_speed = 7
+obstacle_color_idx = 1
+
+font = pygame.font.SysFont("consolas", 40)
+
+game_over = False
+
+while True:
+    clock.tick(60)
+    win.fill((30, 30, 30))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.KEYDOWN and not game_over:
+            if event.key == pygame.K_SPACE:
+                # Cycle player color
+                player_color_idx = (player_color_idx + 1) % len(colors)
+        if event.type == pygame.KEYDOWN and game_over:
+            if event.key == pygame.K_r:
+                # Reset game
+                obstacle_rect.x = WIDTH
+                obstacle_color_idx = 1
+                player_color_idx = 0
+                game_over = False
+
+    if not game_over:
+        # Move obstacle left
+        obstacle_rect.x -= obstacle_speed
+
+        # Respawn obstacle and change color when off-screen
+        if obstacle_rect.right < 0:
+            obstacle_rect.left = WIDTH
+            obstacle_color_idx = (obstacle_color_idx + 1) % len(colors)
+
+        # Draw player and obstacle
+        pygame.draw.rect(win, colors[player_color_idx], player_rect)
+        pygame.draw.rect(win, colors[obstacle_color_idx], obstacle_rect)
+
+        # Collision detection & color mismatch = game over
+        if player_rect.colliderect(obstacle_rect):
+            if player_color_idx != obstacle_color_idx:
+                game_over = True
+
+    else:
+        # Game over screen
+        text = font.render("Game Over! Press R to Restart", True, (255, 255, 255))
+        win.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+
+    pygame.display.flip()
